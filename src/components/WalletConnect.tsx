@@ -1,19 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-// Tambahkan deklarasi agar TypeScript mengenali ethereum & event-nya
-declare global {
-  interface EthereumProvider {
-    request: (args: { method: string; params?: any[] }) => Promise<any>;
-    on: (eventName: string, listener: (...args: any[]) => void) => void;
-    removeListener: (eventName: string, listener: (...args: any[]) => void) => void;
-  }
-
-  interface Window {
-    ethereum?: EthereumProvider;
-  }
-}
-
 export default function WalletConnect({ onConnected }: { onConnected: (address: string) => void }) {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
@@ -41,17 +28,18 @@ export default function WalletConnect({ onConnected }: { onConnected: (address: 
         setWalletAddress(null);
       }
     };
-
-    if (window.ethereum) {
+  
+    if (window.ethereum?.on) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
-
+  
     return () => {
-      if (window.ethereum) {
+      if (window.ethereum?.removeListener) {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       }
     };
   }, [onConnected]);
+  
 
   return (
     <div>

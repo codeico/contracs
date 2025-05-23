@@ -4,17 +4,13 @@ import { ethers } from 'ethers';
 import MemeToken from '../contracts/MemeToken.json';
 import TimerToken from '../contracts/TimerToken.json';
 
-// Tambahkan deklarasi ethereum ke window agar dikenali TypeScript
-declare global {
-  interface Window {
-    ethereum?: import('ethers').Eip1193Provider;
-  }
-}
-
-// Tipe data untuk file .json
 interface ContractJson {
   abi: ethers.InterfaceAbi;
   bytecode: string;
+}
+
+interface EthereumError extends Error {
+  code?: number;
 }
 
 export default function DeployForm({ walletAddress }: { walletAddress: string }) {
@@ -29,25 +25,33 @@ export default function DeployForm({ walletAddress }: { walletAddress: string })
     try {
       await window.ethereum.request?.({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x40D9' }], // 16601 in hex
+        params: [{ chainId: '0x40D9' }],
       });
     } catch (err: unknown) {
-      if (typeof err === 'object' && err !== null && 'code' in err && (err as any).code === 4902) {
-        await window.ethereum.request?.({
-          method: 'wallet_addEthereumChain',
-          params: [{
-            chainId: '0x40D9',
-            chainName: '0G-Newton-Testnet',
-            rpcUrls: ['https://evmrpc-testnet.0g.ai'],
-            nativeCurrency: {
-              name: '0G',
-              symbol: '0G',
-              decimals: 18,
-            },
-          }],
-        });
+      const error = err as EthereumError;
+
+      if (error?.code === 4902) {
+        try {
+          await window.ethereum.request?.({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x40D9',
+              chainName: '0G-Newton-Testnet',
+              rpcUrls: ['https://evmrpc-testnet.0g.ai'],
+              nativeCurrency: {
+                name: '0G',
+                symbol: '0G',
+                decimals: 18,
+              },
+            }],
+          });
+        } catch (addErr) {
+          alert('Gagal menambahkan jaringan 0G');
+          console.error(addErr);
+        }
       } else {
         alert('Gagal switch jaringan');
+        console.error(err);
       }
     }
   };
@@ -56,16 +60,17 @@ export default function DeployForm({ walletAddress }: { walletAddress: string })
     if (!window.ethereum) return alert('MetaMask tidak ditemukan');
     await switchTo0G();
 
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-
-    const contractData: ContractJson = type === 'meme' ? MemeToken : TimerToken;
-    const factory = new ethers.ContractFactory(contractData.abi, contractData.bytecode, signer);
-    
     try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const contractData: ContractJson = type === 'meme' ? MemeToken : TimerToken;
+      const factory = new ethers.ContractFactory(contractData.abi, contractData.bytecode, signer);
+
       setStatus('Men-deploy kontrak...');
       const contract = await factory.deploy(name, ticker);
       await contract.waitForDeployment();
+
       const address = await contract.getAddress();
       setStatus(`✅ Kontrak berhasil dideploy di alamat: ${address}`);
     } catch (err) {
@@ -74,7 +79,9 @@ export default function DeployForm({ walletAddress }: { walletAddress: string })
     }
   };
 
-  if (!walletAddress) return <p className="text-red-500">Hubungkan wallet terlebih dahulu.</p>;
+  if (!walletAddress) {
+    return <p className="text-red-500">Hubungkan wallet terlebih dahulu.</p>;
+  }
 
   return (
     <form onSubmit={e => { e.preventDefault(); deploy(); }} className="flex flex-col gap-3 max-w-md mx-auto">
