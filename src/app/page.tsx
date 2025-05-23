@@ -1,21 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import WalletConnect from '../components/WalletConnect';
 import DeployForm from '../components/DeployForm';
 
 export default function Home() {
   const [walletAddress, setWalletAddress] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (darkMode) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-  }, [darkMode]);
 
   return (
     <main className="min-h-screen px-4 py-10 flex flex-col items-center bg-black text-white">
