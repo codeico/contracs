@@ -48,9 +48,9 @@ export default function WalletConnect({ onConnected }: { onConnected: (address: 
           Wallet: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
         </p>
       ) : (
-        <button onClick={connectWallet} className="bg-blue-600 text-white px-4 py-2 rounded">
-          Connect MetaMask
-        </button>
+        <center><button onClick={connectWallet} className="bg-blue-600 text-white px-4 py-2 rounded">
+        Connect MetaMask
+      </button></center>
       )}
     </div>
   );

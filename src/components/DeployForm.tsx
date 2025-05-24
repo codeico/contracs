@@ -1,8 +1,11 @@
 'use client';
+
 import { useState } from 'react';
 import { ethers } from 'ethers';
 import MemeToken from '../contracts/MemeToken.json';
 import TimerToken from '../contracts/TimerToken.json';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 interface ContractJson {
   abi: ethers.InterfaceAbi;
@@ -13,7 +16,13 @@ interface EthereumError extends Error {
   code?: number;
 }
 
-export default function DeployForm({ walletAddress }: { walletAddress: string }) {
+export default function DeployForm({
+  walletAddress,
+  onDeployed,
+}: {
+  walletAddress: string;
+  onDeployed?: (data: { name: string; address: string; type: string }) => void;
+}) {
   const [name, setName] = useState('');
   const [ticker, setTicker] = useState('');
   const [type, setType] = useState<'meme' | 'timer'>('meme');
@@ -34,16 +43,18 @@ export default function DeployForm({ walletAddress }: { walletAddress: string })
         try {
           await window.ethereum.request?.({
             method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x40D9',
-              chainName: '0G-Newton-Testnet',
-              rpcUrls: ['https://evmrpc-testnet.0g.ai'],
-              nativeCurrency: {
-                name: '0G',
-                symbol: '0G',
-                decimals: 18,
+            params: [
+              {
+                chainId: '0x40D9',
+                chainName: '0G-Newton-Testnet',
+                rpcUrls: ['https://evmrpc-testnet.0g.ai'],
+                nativeCurrency: {
+                  name: '0G',
+                  symbol: '0G',
+                  decimals: 18,
+                },
               },
-            }],
+            ],
           });
         } catch (addErr) {
           alert('Gagal menambahkan jaringan 0G');
@@ -73,6 +84,21 @@ export default function DeployForm({ walletAddress }: { walletAddress: string })
 
       const address = await contract.getAddress();
       setStatus(`✅ Kontrak berhasil dideploy di alamat: ${address}`);
+
+      // Simpan ke Firestore
+      await addDoc(collection(db, 'contracts'), {
+        wallet: walletAddress,
+        name,
+        ticker,
+        type,
+        address,
+        createdAt: serverTimestamp(),
+      });
+
+      // Callback ke parent agar langsung ditampilkan
+      if (onDeployed) {
+        onDeployed({ name, address, type });
+      }
     } catch (err) {
       console.error(err);
       setStatus('❌ Gagal deploy kontrak');
@@ -85,7 +111,10 @@ export default function DeployForm({ walletAddress }: { walletAddress: string })
 
   return (
     <form
-      onSubmit={e => { e.preventDefault(); deploy(); }}
+      onSubmit={e => {
+        e.preventDefault();
+        deploy();
+      }}
       className="bg-zinc-900 text-white p-6 rounded-2xl shadow-xl max-w-md w-full mx-auto mt-8 space-y-4 border border-zinc-700"
     >
       <h2 className="text-xl font-semibold text-center mb-2">Deploy Token ke 0G Testnet</h2>
