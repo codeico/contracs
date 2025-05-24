@@ -39,7 +39,7 @@ export default function DeployedContracts({
 
   return (
     <div className="text-left">
-      <h2 className="text-xl font-semibold mb-2 text-white">📜 Kontrak yang Dideploy</h2>
+      <h2 className="text-xl font-semibold mb-2 text-white justify-center items-center">📜 Kontrak yang Dideploy</h2>
       <ul className="space-y-2">
         {allContracts.map((contract, index) => (
           <li key={index} className="bg-gray-800 p-3 rounded">

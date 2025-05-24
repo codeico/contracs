@@ -20,9 +20,11 @@ export default function Home() {
     <main className="min-h-screen px-4 py-10 flex flex-col items-center bg-gradient-to-br from-black via-zinc-900 to-black text-white font-sans">
       <div className="w-full max-w-3xl space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-green-400 via-teal-400 to-blue-500 bg-clip-text text-transparent">
-            <Rocket className="inline-block w-8 h-8 mr-2 animate-pulse" /> 0G Contract Deployer
-          </h1>
+        <h1 className="flex justify-center items-center text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-green-400 via-teal-400 to-blue-500 bg-clip-text text-transparent">
+          <Rocket className="w-8 h-8 mr-2 animate-pulse" />
+          0G Contract Deployer
+        </h1>
+
           <p className="mt-2 text-zinc-400 text-sm">Power to the devs. Deploy smart contracts in seconds 🚀</p>
         </div>
 
